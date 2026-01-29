@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Calendar, Users, Star, TrendingUp, Award, Plane } from 'lucide-react';
 import HeroSection from '../components/HeroSection';
 import HoneymoonSection from '../components/HoneymoonSection';
+import { formatPrice } from '../utils/formatters';
 
 const Home = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -220,7 +221,7 @@ const Home = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-gray-500 text-sm">Starting from</p>
-                    <p className="text-2xl font-bold text-blue-600">₹{destination.price}</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPrice(destination.price)}</p>
                   </div>
                   <Link to="/domestic" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors group-hover:shadow-lg inline-block">
                     View Details

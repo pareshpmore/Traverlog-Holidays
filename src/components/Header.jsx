@@ -1,9 +1,37 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Plane, Menu, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plane, Menu, X, User, LogOut, ChevronDown, Settings } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+  const navigate = useNavigate();
+  const { currentUser, userRole, logout } = useAuth();
+  const isAdmin = userRole === 'admin';
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to log out', error);
+    }
+  };
 
   // Helper function to get the correct path for sub-items
   const getSubItemPath = (parent, item) => {
@@ -70,7 +98,7 @@ const Header = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-blue-600 bg-clip-text text-transparent">
-                  Travelog Holiday
+                  Travelong Holiday
                 </h1>
                 <p className="text-[10px] text-gray-500 font-medium">Create Memories</p>
               </div>
@@ -149,17 +177,75 @@ const Header = () => {
                 )}
               </div>
             ))}
-            <button className="bg-blue-600 hover:from-blue-700 hover:to-cyan-600 text-white px-5 py-1.5 rounded-lg font-semibold text-sm transition-all transform hover:scale-105 shadow-md ml-4">
-              Login
-            </button>
+            <div className="flex items-center gap-4">
+              {currentUser ? (
+                <div className="relative" ref={profileRef}>
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 focus:outline-none"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <span className="hidden md:inline">
+                      {currentUser.displayName || currentUser.email?.split('@')[0]}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isProfileOpen ? 'transform rotate-180' : ''}`} />
+                  </button>
+
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                        <p className="font-medium truncate">{currentUser.displayName || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
+                      </div>
+                      {isAdmin && (
+                        <Link
+                          to="/admin"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <Settings className="w-4 h-4 mr-2" />
+                          Admin Dashboard
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="hidden md:block px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </div>
           </nav>
 
-          <button
-            className="lg:hidden text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="lg:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none"
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {isMenuOpen && (

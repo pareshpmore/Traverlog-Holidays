@@ -1,5 +1,6 @@
 // src/pages/CabBooking.jsx
 import React, { useState } from 'react';
+import { formatPrice } from '../utils/formatters';
 
 const CabBooking = () => {
   const [tripType, setTripType] = useState('one-way');
@@ -146,7 +147,7 @@ const CabBooking = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold mb-1">₹{cab.price}/km</div>
+                      <div className="text-2xl font-bold mb-1">{formatPrice(cab.price)}/km</div>
                       <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
                         Book Now
                       </button>

@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Public data (readable by anyone)
+    match /public/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // User profiles
+    match /users/{userId} {
+      // Users can read their own profile
+      // Admins can read any profile
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      
+      // Users can update their own profile
+      // Admins can update any profile
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      
+      // Only admins can create/delete profiles
+      allow create, delete: if isAdmin();
+      
+      // Subcollections under user profiles
+      match /{document=**} {
+        // Same rules as parent document
+        allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+        allow write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      }
+    }
+    
+    // Admin-only collections
+    match /admin/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Packages collection
+    match /packages/{packageId} {
+      // Allow anyone to read packages
+      allow read: if true;
+      
+      // Only allow admins to create, update, or delete packages
+      allow create, update, delete: if isAdmin();
+      
+      // Subcollections under packages
+      match /{document=**} {
+        // Same rules as parent document
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+    
+    // Default deny all other operations
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

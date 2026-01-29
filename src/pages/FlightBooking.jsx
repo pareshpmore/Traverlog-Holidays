@@ -1,5 +1,6 @@
 // src/pages/FlightBooking.jsx
 import React, { useState } from 'react';
+import { formatPrice } from '../utils/formatters';
 
 const FlightBooking = () => {
   const [tripType, setTripType] = useState('one-way');
@@ -107,7 +108,7 @@ const FlightBooking = () => {
                   <div className="text-sm text-gray-500">Non-stop</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xl font-bold">₹{route.price}</div>
+                  <div className="text-xl font-bold">{formatPrice(route.price)}</div>
                   <div className="text-sm text-gray-500">One way</div>
                 </div>
               </div>

@@ -1,113 +1,229 @@
 // src/pages/Login.jsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { FaGoogle, FaPhone, FaEnvelope, FaArrowRight } from 'react-icons/fa';
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [activeTab, setActiveTab] = useState('email');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const {
+    login,
+    signInWithGoogle,
+    sendPhoneOtp,
+    verifyPhoneOtp,
+    initRecaptcha,
+    isAuthenticated,
+    userRole
+  } = useAuth();
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || '/';
+
+  // Initialize reCAPTCHA ONCE
+  useEffect(() => {
+    if (!window.recaptchaVerifier) {
+      initRecaptcha('recaptcha-container');
+    }
+  }, []);
+
+  // Redirect after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (userRole === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
+    }
+  }, [isAuthenticated, userRole, navigate, from]);
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      await login(email, password);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle login logic here
-    console.log('Login submitted:', formData);
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (!phone.startsWith('+')) {
+      setError('Phone number must include country code (e.g. +91...)');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      await sendPhoneOtp(phone);
+      setOtpSent(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      setError('Enter the OTP');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      await verifyPhoneOtp(otp);
+      // redirect handled by useEffect
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/" className="font-medium text-blue-600 hover:text-blue-500">
-              continue as guest
-            </Link>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                Email address
-              </label>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Sign in to your account
+        </h2>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+
+          {/* Tabs */}
+          <div className="flex mb-6 border-b border-gray-200">
+            {['email', 'phone', 'google'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-4 text-sm font-medium ${
+                  activeTab === tab ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'
+                }`}
+              >
+                {tab === 'email' && <FaEnvelope className="inline mr-2" />}
+                {tab === 'phone' && <FaPhone className="inline mr-2" />}
+                {tab === 'google' && <FaGoogle className="inline mr-2" />}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {error && (
+            <div className="mb-4 bg-red-100 text-red-700 px-4 py-2 rounded">
+              {error}
+            </div>
+          )}
+
+          {/* EMAIL */}
+          {activeTab === 'email' && (
+            <form onSubmit={handleEmailLogin} className="space-y-4">
               <input
-                id="email-address"
-                name="email"
                 type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
               />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
               <input
-                id="password"
-                name="password"
                 type="password"
-                autoComplete="current-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
               />
-            </div>
-          </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-2 rounded"
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
+          )}
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
+          {/* PHONE */}
+          {activeTab === 'phone' && (
+            <div className="space-y-4">
               <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                type="tel"
+                placeholder="+91XXXXXXXXXX"
+                value={phone}
+                disabled={otpSent}
+                onChange={e => setPhone(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
 
-            <div className="text-sm">
-              <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                Forgot your password?
-              </a>
-            </div>
-          </div>
+              {otpSent && (
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                  className="w-full border px-3 py-2 rounded"
+                />
+              )}
 
-          <div>
+              <button
+                type="button"
+                onClick={otpSent ? handleVerifyOtp : handleSendOtp}
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-2 rounded"
+              >
+                {loading ? 'Processing...' : otpSent ? 'Verify OTP' : 'Send OTP'}
+              </button>
+            </div>
+          )}
+
+          {/* GOOGLE */}
+          {activeTab === 'google' && (
             <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full flex items-center justify-center py-2 border rounded"
             >
-              Sign in
+              <FaGoogle className="mr-2 text-red-500" />
+              {loading ? 'Signing in...' : 'Sign in with Google'}
             </button>
+          )}
+
+          <div className="mt-6 text-center">
+            <Link to="/register" className="text-blue-600">Create account</Link>
           </div>
-        </form>
-        <div className="text-sm text-center mt-4">
-          <span className="text-gray-600">Don't have an account? </span>
-          <Link to="/" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign up
-          </Link>
         </div>
       </div>
+
+      {/* reCAPTCHA */}
+      <div id="recaptcha-container"></div>
     </div>
   );
 };
