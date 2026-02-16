@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Calendar, Users, Star, TrendingUp, Award, Plane } from 'lucide-react';
 import HeroSection from '../components/HeroSection';
 import HoneymoonSection from '../components/HoneymoonSection';
-import { formatPrice } from '../utils/formatters';
+import { formatPrice, formatDuration } from '../utils/formatters';
 
 const Home = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -13,7 +13,7 @@ const Home = () => {
       name: 'Goa Beaches', 
       image: 'https://images.unsplash.com/photo-1559628376-f3fe5f782a2e?w=800&h=600&fit=crop',
       price: '12,999',
-      duration: '5 Days',
+      duration: { days: 5, nights: 4 },
       rating: 4.8,
       popular: true
     },
@@ -21,7 +21,7 @@ const Home = () => {
       name: 'Kerala Backwaters', 
       image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&h=600&fit=crop',
       price: '15,499',
-      duration: '6 Days',
+      duration: { days: 6, nights: 5 },
       rating: 4.9,
       popular: true
     },
@@ -29,7 +29,7 @@ const Home = () => {
       name: 'Himalayan Trek', 
       image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
       price: '18,999',
-      duration: '7 Days',
+      duration: { days: 7, nights: 6 },
       rating: 4.7,
       popular: false
     },
@@ -210,7 +210,7 @@ const Home = () => {
                       <span className="text-sm font-semibold text-gray-800">{destination.rating}</span>
                     </div>
                     <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-sm font-medium text-gray-800">
-                      {destination.duration}
+                      {formatDuration(destination.duration)}
                     </div>
                   </div>
                 </div>

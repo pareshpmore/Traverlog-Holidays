@@ -11,12 +11,23 @@ const CreatePackage = () => {
   const [packageData, setPackageData] = useState({
     name: '',
     slug: '',
+    category: 'romantic-honeymoon',
     type: 'domestic',
-    duration: '',
+    duration: {
+      days: 1,
+      nights: 0
+    },
     price: 0,
     description: '',
     images: [''],
     featured: false,
+    inclusions: [''],
+    exclusions: [''],
+    termsAndConditions: [''],
+    cancellationPolicy: [''],
+    rating: 4.5,
+    reviewsCount: 10,
+    galleryImages: [''],
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
@@ -54,32 +65,40 @@ const CreatePackage = () => {
     }));
   };
 
-  const handleImageChange = (index, value) => {
-    const newImages = [...packageData.images];
-    newImages[index] = value;
+  const handleImageChange = (index, value, field = 'images') => {
+    const newItems = [...packageData[field]];
+    newItems[index] = value;
     setPackageData(prev => ({
       ...prev,
-      images: newImages
+      [field]: newItems
     }));
   };
 
-  const addImageField = () => {
+  const addItem = (field) => {
     setPackageData(prev => ({
       ...prev,
-      images: [...prev.images, '']
+      [field]: [...prev[field], '']
     }));
   };
 
-  const removeImageField = (index) => {
-    const newImages = packageData.images.filter((_, i) => i !== index);
+  const removeItem = (index, field) => {
+    const newItems = packageData[field].filter((_, i) => i !== index);
     setPackageData(prev => ({
       ...prev,
-      images: newImages
+      [field]: newItems
+    }));
+  };
+  
+  const handleTextareaChange = (e) => {
+    const { name, value } = e.target;
+    setPackageData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
 
   const validateForm = () => {
-    const requiredFields = ['name', 'slug', 'duration', 'price', 'description'];
+    const requiredFields = ['name', 'slug', 'price', 'description'];
     const missingFields = [];
 
     requiredFields.forEach(field => {
@@ -97,8 +116,13 @@ const CreatePackage = () => {
       return false;
     }
 
-    if (isNaN(packageData.duration) || packageData.duration < 1) {
+    if (!packageData.duration || isNaN(packageData.duration.days) || packageData.duration.days < 1) {
       toast.error('Duration must be at least 1 day');
+      return false;
+    }
+
+    if (isNaN(packageData.duration.nights) || packageData.duration.nights < 0) {
+      toast.error('Number of nights cannot be negative');
       return false;
     }
 
@@ -120,18 +144,34 @@ const CreatePackage = () => {
     setLoading(true);
 
     try {
-      // Filter out empty image URLs
+      // Filter out empty values from all arrays
       const filteredImages = packageData.images.filter(url => url.trim() !== '');
+      const filteredInclusions = packageData.inclusions.filter(item => item.trim() !== '');
+      const filteredExclusions = packageData.exclusions.filter(item => item.trim() !== '');
+      const filteredGallery = packageData.galleryImages.filter(url => url.trim() !== '');
+      const filteredTerms = packageData.termsAndConditions.filter(term => term.trim() !== '');
+      const filteredPolicies = packageData.cancellationPolicy.filter(policy => policy.trim() !== '');
       
-      // Create package data with required fields
+      // Create package data with all fields
       const packageToSave = {
         name: packageData.name.trim(),
         slug: packageData.slug.trim(),
+        category: packageData.category,
         type: packageData.type,
-        duration: Number(packageData.duration),
+        duration: {
+          days: Number(packageData.duration.days),
+          nights: Number(packageData.duration.nights)
+        },
         price: Number(packageData.price),
         description: packageData.description.trim(),
         images: filteredImages,
+        galleryImages: filteredGallery,
+        inclusions: filteredInclusions,
+        exclusions: filteredExclusions,
+        termsAndConditions: filteredTerms,
+        cancellationPolicy: filteredPolicies,
+        rating: Number(packageData.rating) || 4.5,
+        reviewsCount: Number(packageData.reviewsCount) || 10,
         featured: Boolean(packageData.featured),
         itinerary: [], // Initialize empty itinerary array
         createdAt: serverTimestamp(),
@@ -151,6 +191,12 @@ const CreatePackage = () => {
       setLoading(false);
     }
   };
+const packageCategories = {
+  "romantic-honeymoon": ["domestic", "international"],
+  "celebration-packages": ["anniversary", "birthday", "festival"],
+  "bachelor-holidays": [],
+  "family-holidays": []
+};
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -209,36 +255,96 @@ const CreatePackage = () => {
 
               {/* Type */}
               <div className="sm:col-span-2">
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                  Type *
+                <label className="block text-sm font-medium text-gray-700">
+                  Category *
                 </label>
+
                 <select
-                  id="type"
-                  name="type"
-                  value={packageData.type}
+                  name="category"
+                  value={packageData.category}
                   onChange={handleChange}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                  className="mt-1 block w-full border-gray-300 rounded-md"
                 >
-                  <option value="domestic">Domestic</option>
-                  <option value="international">International</option>
+                  <option value="romantic-honeymoon">Romantic Honeymoon</option>
+                  <option value="celebration-packages">Celebration Packages</option>
+                  <option value="bachelor-holidays">Bachelor Holidays</option>
+                  <option value="family-holidays">Family Holidays</option>
                 </select>
               </div>
 
-              {/* Duration */}
               <div className="sm:col-span-2">
-                <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
-                  Duration (days) *
+                <label className="block text-sm font-medium text-gray-700">
+                  Type
                 </label>
-                <div className="mt-1">
+
+                <select
+                  name="type"
+                  value={packageData.type}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                  disabled={!packageCategories[packageData.category]?.length}
+                >
+                  {packageCategories[packageData.category]?.length ? (
+                    packageCategories[packageData.category].map((type) => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">No Sub Type</option>
+                  )}
+                </select>
+              </div>
+
+
+
+              {/* Duration */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="duration-days" className="block text-sm font-medium text-gray-700">
+                    Days *
+                  </label>
                   <input
                     type="number"
-                    name="duration"
-                    id="duration"
+                    id="duration-days"
+                    name="duration.days"
                     min="1"
-                    value={packageData.duration}
-                    onChange={handleChange}
-                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    value={packageData.duration?.days || ''}
+                    onChange={(e) => {
+                      const days = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                      setPackageData(prev => ({
+                        ...prev,
+                        duration: {
+                          ...prev.duration,
+                          days: isNaN(days) ? '' : Math.max(1, days)
+                        }
+                      }));
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="duration-nights" className="block text-sm font-medium text-gray-700">
+                    Nights
+                  </label>
+                  <input
+                    type="number"
+                    id="duration-nights"
+                    name="duration.nights"
+                    min="0"
+                    value={packageData.duration?.nights || ''}
+                    onChange={(e) => {
+                      const nights = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                      setPackageData(prev => ({
+                        ...prev,
+                        duration: {
+                          ...prev.duration,
+                          nights: isNaN(nights) ? 0 : Math.max(0, nights)
+                        }
+                      }));
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -307,36 +413,260 @@ const CreatePackage = () => {
               {/* Images */}
               <div className="sm:col-span-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Image URLs
+                  Main Image URLs (for thumbnails)
                 </label>
-                {packageData.images.map((url, index) => (
-                  <div key={index} className="flex mb-2">
-                    <input
-                      type="url"
-                      value={url}
-                      onChange={(e) => handleImageChange(index, e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                      className="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-l-md"
-                    />
-                    {packageData.images.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeImageField(index)}
-                        className="ml-1 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-r-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addImageField}
-                  className="mt-2 inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" />
-                  Add Another Image
-                </button>
+                <div className="space-y-2">
+                  {packageData.images.map((url, index) => (
+                    <div key={`main-${index}`} className="flex space-x-2">
+                      <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => handleImageChange(index, e.target.value, 'images')}
+                        className="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      {packageData.images.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index, 'images')}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addItem('images')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" />
+                    Add Main Image URL
+                  </button>
+                </div>
+              </div>
+
+              {/* Gallery Images */}
+              <div className="sm:col-span-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gallery Image URLs (for package gallery)
+                </label>
+                <div className="space-y-2">
+                  {packageData.galleryImages.map((url, index) => (
+                    <div key={`gallery-${index}`} className="flex space-x-2">
+                      <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => handleImageChange(index, e.target.value, 'galleryImages')}
+                        className="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="https://example.com/gallery-image.jpg"
+                      />
+                      {packageData.galleryImages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index, 'galleryImages')}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addItem('galleryImages')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" />
+                    Add Gallery Image URL
+                  </button>
+                </div>
+              </div>
+
+              {/* Inclusions */}
+              <div className="sm:col-span-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Inclusions (what's included in the package)
+                </label>
+                <div className="space-y-2">
+                  {packageData.inclusions.map((item, index) => (
+                    <div key={`inclusion-${index}`} className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={item}
+                        onChange={(e) => handleImageChange(index, e.target.value, 'inclusions')}
+                        className="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="e.g., Accommodation, Meals, etc."
+                      />
+                      {packageData.inclusions.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index, 'inclusions')}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addItem('inclusions')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" />
+                    Add Inclusion
+                  </button>
+                </div>
+              </div>
+
+              {/* Exclusions */}
+              <div className="sm:col-span-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Exclusions (what's not included in the package)
+                </label>
+                <div className="space-y-2">
+                  {packageData.exclusions.map((item, index) => (
+                    <div key={`exclusion-${index}`} className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={item}
+                        onChange={(e) => handleImageChange(index, e.target.value, 'exclusions')}
+                        className="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="e.g., Flights, Travel Insurance, etc."
+                      />
+                      {packageData.exclusions.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index, 'exclusions')}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addItem('exclusions')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" />
+                    Add Exclusion
+                  </button>
+                </div>
+              </div>
+
+              {/* Terms and Conditions */}
+              <div className="sm:col-span-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Terms and Conditions
+                </label>
+                <div className="space-y-2">
+                  {packageData.termsAndConditions.map((term, index) => (
+                    <div key={`term-${index}`} className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={term}
+                        onChange={(e) => handleImageChange(index, e.target.value, 'termsAndConditions')}
+                        className="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="e.g., Full payment required at time of booking"
+                      />
+                      {packageData.termsAndConditions.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index, 'termsAndConditions')}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addItem('termsAndConditions')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" />
+                    Add Term
+                  </button>
+                </div>
+              </div>
+
+              {/* Cancellation Policy */}
+              <div className="sm:col-span-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cancellation Policy
+                </label>
+                <div className="space-y-2">
+                  {packageData.cancellationPolicy.map((policy, index) => (
+                    <div key={`policy-${index}`} className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={policy}
+                        onChange={(e) => handleImageChange(index, e.target.value, 'cancellationPolicy')}
+                        className="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="e.g., 30 days before check-in: 100% refund"
+                      />
+                      {packageData.cancellationPolicy.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index, 'cancellationPolicy')}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addItem('cancellationPolicy')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" />
+                    Add Policy
+                  </button>
+                </div>
+              </div>
+
+              {/* Rating and Reviews */}
+              <div className="sm:col-span-3">
+                <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
+                  Rating (0-5)
+                </label>
+                <div className="mt-1">
+                  <input
+                    type="number"
+                    name="rating"
+                    id="rating"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={packageData.rating}
+                    onChange={handleChange}
+                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+
+              <div className="sm:col-span-3">
+                <label htmlFor="reviewsCount" className="block text-sm font-medium text-gray-700">
+                  Number of Reviews
+                </label>
+                <div className="mt-1">
+                  <input
+                    type="number"
+                    name="reviewsCount"
+                    id="reviewsCount"
+                    min="0"
+                    value={packageData.reviewsCount}
+                    onChange={handleChange}
+                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
               </div>
             </div>
           </div>

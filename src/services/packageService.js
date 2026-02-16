@@ -1,4 +1,15 @@
-import { collection, getDocs, setDoc, doc, serverTimestamp, query, where, limit, onSnapshot } from 'firebase/firestore';
+import { 
+  collection, 
+  getDocs, 
+  setDoc, 
+  doc, 
+  serverTimestamp, 
+  query, 
+  where, 
+  limit, 
+  onSnapshot, 
+  writeBatch 
+} from 'firebase/firestore';
 import { db } from '../firebase';
 
 const PACKAGES_COLLECTION = 'packages';
@@ -7,6 +18,69 @@ const PACKAGES_COLLECTION = 'packages';
  * Checks if the packages collection exists and creates it if it doesn't
  * @returns {Promise<boolean>} True if collection exists or was created successfully
  */
+/**
+ * Updates existing package documents to include new optional fields if they don't exist
+ * @returns {Promise<{updatedCount: number, totalPackages: number}>} Object containing count of updated packages and total packages
+ */
+export const updatePackageSchema = async () => {
+  try {
+    const packagesRef = collection(db, PACKAGES_COLLECTION);
+    const querySnapshot = await getDocs(packagesRef);
+    
+    if (querySnapshot.empty) {
+      console.log('No packages found in the collection.');
+      return { updatedCount: 0, totalPackages: 0 };
+    }
+    
+    const batch = writeBatch(db);
+    let updateCount = 0;
+    
+    querySnapshot.forEach((docSnapshot) => {
+      const docData = docSnapshot.data();
+      const updates = {};
+      
+      // Check and add missing fields
+      if (!docData.inclusions) updates.inclusions = [];
+      if (!docData.exclusions) updates.exclusions = [];
+      if (!docData.termsAndConditions) updates.termsAndConditions = [];
+      if (!docData.cancellationPolicy) updates.cancellationPolicy = [];
+      if (docData.rating === undefined) updates.rating = 4.5;
+      if (docData.reviewsCount === undefined) updates.reviewsCount = 10;
+      if (!docData.galleryImages) updates.galleryImages = [];
+      
+      // Only update if there are fields to add
+      if (Object.keys(updates).length > 0) {
+        const docRef = doc(db, PACKAGES_COLLECTION, docSnapshot.id);
+        batch.update(docRef, {
+          ...updates,
+          updatedAt: serverTimestamp()
+        });
+        updateCount++;
+      }
+    });
+    
+    // Commit the batch if there are updates
+    if (updateCount > 0) {
+      await batch.commit();
+      console.log(`Successfully updated ${updateCount} packages with new schema fields.`);
+    } else {
+      console.log('All packages already have the latest schema fields.');
+    }
+    
+    return { 
+      updatedCount: updateCount, 
+      totalPackages: querySnapshot.size,
+      message: updateCount > 0 
+        ? `Updated ${updateCount} out of ${querySnapshot.size} packages.`
+        : 'No updates needed. All packages have the latest schema.'
+    };
+    
+  } catch (error) {
+    console.error('Error updating package schema:', error);
+    throw error;
+  }
+};
+
 export const ensurePackagesCollection = async () => {
   try {
     // Check if collection exists by trying to get documents
@@ -26,7 +100,10 @@ export const ensurePackagesCollection = async () => {
         name: '',
         slug: '',
         type: 'domestic',
-        duration: '',
+        duration: {
+          days: 0,
+          nights: 0
+        },
         price: 0,
         description: '',
         images: [],
@@ -35,6 +112,8 @@ export const ensurePackagesCollection = async () => {
           title: '',
           description: '',
           meals: '',
+          termsAndConditions: [],
+          cancellationPolicy: [],
           hotel: ''
         }],
         createdAt: serverTimestamp(),
@@ -65,7 +144,9 @@ export const ensurePackagesCollection = async () => {
  * @property {string} name - Name of the package
  * @property {string} slug - URL-friendly slug for the package
  * @property {'domestic'|'international'} type - Type of package
- * @property {string} duration - Duration of the package (e.g., "3 Days / 2 Nights")
+ * @property {Object} duration - Duration of the package
+ * @property {number} duration.days - Number of days
+ * @property {number} duration.nights - Number of nights
  * @property {number} price - Price of the package
  * @property {string} description - Detailed description of the package
  * @property {string[]} images - Array of image URLs

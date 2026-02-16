@@ -24,6 +24,8 @@ import Settings from './pages/admin/Settings';
 import Packages from './pages/admin/Packages';
 import CreatePackage from './pages/admin/CreatePackage';
 import EditPackage from './pages/admin/EditPackage';
+import CategoryPackages from "./pages/CategoryPackages";
+
 
 // Placeholder component
 const Domestic = () => (
@@ -71,6 +73,8 @@ function App() {
             <Route path="domestic" element={<Domestic />} />
             <Route path="international" element={<International />} />
             <Route path="package/:slug" element={<PackageDetail />} />
+            <Route path=":category" element={<CategoryPackages />} />
+            <Route path=":category/:type" element={<CategoryPackages />} />
             
             {/* Protected Admin Routes */}
             <Route path="admin" element={

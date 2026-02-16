@@ -19,3 +19,41 @@ export const formatPricePerKm = (price) => {
 export const formatPricePerPerson = (price) => {
   return `${formatPrice(price)}/person`;
 };
+
+/**
+ * Formats a duration object, number, or string into a human-readable format.
+ * @param {Object|number|string} duration - The duration to format
+ * @returns {string} Formatted duration string
+ * 
+ * @example
+ * formatDuration({ days: 3, nights: 2 }) // returns "3 Days / 2 Nights"
+ * formatDuration(5) // returns "5 Days"
+ * formatDuration("Custom duration") // returns "Custom duration"
+ */
+export const formatDuration = (duration) => {
+  if (!duration) return '';
+  
+  // Handle string (legacy support)
+  if (typeof duration === 'string') {
+    return duration;
+  }
+  
+  // Handle number (treat as days)
+  if (typeof duration === 'number') {
+    return `${duration} ${duration === 1 ? 'Day' : 'Days'}`;
+  }
+  
+  // Handle object with days and nights
+  if (typeof duration === 'object' && duration !== null) {
+    const { days, nights } = duration;
+    const daysStr = days ? `${days} ${days === 1 ? 'Day' : 'Days'}` : '';
+    const nightsStr = nights ? `${nights} ${nights === 1 ? 'Night' : 'Nights'}` : '';
+    
+    if (daysStr && nightsStr) {
+      return `${daysStr} / ${nightsStr}`;
+    }
+    return daysStr || nightsStr || '';
+  }
+  
+  return '';
+};

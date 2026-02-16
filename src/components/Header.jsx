@@ -34,40 +34,32 @@ const Header = () => {
   };
 
   // Helper function to get the correct path for sub-items
-  const getSubItemPath = (parent, item) => {
-    const itemLower = item.toLowerCase();
-    
-    // Handle Bookings sub-items (adds -booking suffix)
-    if (parent === 'Bookings') {
-      return `/${itemLower}-booking`;
-    }
-    
-    // Handle Romantic Honeymoon sub-items
-    if (parent === 'Romantic Honeymoon') {
-      return `/${itemLower}`; // domestic, international
-    }
-    
-    // Handle Celebration Packages sub-items
-    if (parent === 'Celebration Packages') {
-      return `/${itemLower}`; // anniversary, birthday, festival
-    }
-    
-    // For main navigation items without sub-items
-    switch(item) {
-      case 'Bachelor Holidays':
-        return '/domestic'; // Redirecting to domestic as per common pattern
-      case 'Family Holidays':
-        return '/domestic'; // Redirecting to domestic as per common pattern
-      case 'Contact Us':
-        return '#'; // Using # as a fallback since /contact doesn't exist
-      case 'Romantic Honeymoon':
-      case 'Celebration Packages':
-      case 'Bookings':
-        return '#'; // Prevent redirection for these menu items
-      default:
-        return `/${itemLower}`;
-    }
-  };
+const getSubItemPath = (parent, item) => {
+  const itemLower = item.toLowerCase().replace(" ", "-");
+
+  if (parent === "Romantic Honeymoon") {
+    return `/romantic-honeymoon/${itemLower}`;
+  }
+
+  if (parent === "Celebration Packages") {
+    return `/celebration-packages/${itemLower}`;
+  }
+
+  if (parent === "Bachelor Holidays") {
+    return `/bachelor-holidays`;
+  }
+
+  if (parent === "Family Holidays") {
+    return `/family-holidays`;
+  }
+
+  if (parent === "Bookings") {
+    return `/${itemLower}-booking`;
+  }
+
+  return "#";
+};
+
 
   const navItems = [
     {
