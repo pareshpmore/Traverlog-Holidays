@@ -41,6 +41,11 @@ const Home = () => {
     { icon: Users, title: 'Expert Guides', desc: 'Local experts to enhance your journey' },
   ];
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredDestinations = destinations.filter((destination) =>
+    destination.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <HeroSection />
@@ -58,6 +63,32 @@ const Home = () => {
                 <p className="text-gray-600">{feature.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-10 bg-blue-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Search destinations instantly
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Type any travel destination or experience to find matching packages.
+            </p>
+            <div className="relative">
+              <input
+                id="destination-search"
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search destinations, beaches, mountains, cities..."
+                className="w-full rounded-full border border-blue-200 bg-white px-5 py-4 pr-12 text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-blue-500 text-lg">
+                🔍
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -180,7 +211,7 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {destinations.map((destination, index) => (
+          {filteredDestinations.map((destination, index) => (
             <div 
               key={index}
               onMouseEnter={() => setHoveredCard(index)}

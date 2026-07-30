@@ -1,12 +1,18 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 import PackageCard from "../components/PackageCard";
 
 export default function CategoryPackages() {
   const { category, type } = useParams();
   const [packages, setPackages] = useState([]);
+
+  const sortedPackages = [...packages].sort((a, b) => {
+    const dayA = Number(a.duration?.days) || 9999;
+    const dayB = Number(b.duration?.days) || 9999;
+    return dayA - dayB;
+  });
 
   useEffect(() => {
     let q;
@@ -39,7 +45,7 @@ export default function CategoryPackages() {
 
       
      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {packages.map(pkg => (
+  {sortedPackages.map(pkg => (
     <PackageCard key={pkg.id} pkg={pkg} />
   ))}
 </div>

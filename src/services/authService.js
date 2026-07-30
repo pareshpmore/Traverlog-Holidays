@@ -9,7 +9,7 @@ import {
   signInWithPhoneNumber
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { auth, db } from '../../firebase';
 
 /**
  * Register a new user with email and password

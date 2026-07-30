@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { collection, query, where, limit, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../../firebase';
 import { toast } from 'react-toastify';
 import { formatPrice, formatDuration } from '../utils/formatters';
 import ImageCarousel from '../components/ImageCarousel';

@@ -67,18 +67,19 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start">
                 <MapPin className="w-5 h-5 mt-0.5 mr-3 flex-shrink-0 text-blue-400" />
-                <span className="text-gray-400">123 Travel Street, Vacation City, 100001</span>
+                <span className="text-gray-400">Office Number 428, 4th Floor Goodwill Square, Dhanori,
+Pune, Maharashtra State, India : 411015.</span>
               </li>
               <li className="flex items-center">
                 <Mail className="w-5 h-5 mr-3 text-blue-400" />
                 <a href="mailto:info@travelogholiday.com" className="text-gray-400 hover:text-white transition-colors">
-                  info@travelogholiday.com
+                 paresh@travelogholiday.com
                 </a>
               </li>
               <li className="flex items-center">
                 <Phone className="w-5 h-5 mr-3 text-blue-400" />
                 <a href="tel:+911234567890" className="text-gray-400 hover:text-white transition-colors">
-                  +91 12345 67890
+                 9922514719
                 </a>
               </li>
             </ul>
